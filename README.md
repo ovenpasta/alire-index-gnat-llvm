@@ -158,5 +158,5 @@ warning.
 
 Each [gnat-llvm release](https://github.com/ovenpasta/gnat-llvm/releases)
 attaches its manifest (`gnat_llvm-<version>.toml`), which is added here under
-`gn/gnat_llvm/`. The last version digit counts toolchain builds of the same
+`index/gn/gnat_llvm/`. The last version digit counts toolchain builds of the same
 GCC release, as for Alire's `gnat_native`.
