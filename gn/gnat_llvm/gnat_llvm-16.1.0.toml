@@ -1,0 +1,37 @@
+name = "gnat_llvm"
+version = "16.1.0"
+provides = ["gnat=16.1.0"]
+description = "GNAT-LLVM Ada compiler with WebAssembly and native runtimes"
+long-description = """
+GNAT-LLVM (GCC 16.1.0 front end, LLVM 21 back end) with prebuilt runtimes:
+
+- wasm32: rts-wasm, rts-wasm-eh, rts-wasm-emcc, rts-wasm-emcc-eh,
+  rts-wasm-wasi-eh (and -exnref variants of the EH runtimes)
+- native: rts-native
+
+Projects use `for Target use "llvm";` and select a runtime with
+`for Runtime ("Ada") use external ("GNAT_LLVM_PREFIX") & "/lib/gnat-llvm/wasm32/rts-wasm-eh";`
+"""
+maintainers = ["Aldo Nicolas Bruno <ovenpasta@pizzahack.eu>"]
+maintainers-logins = ["ovenpasta"]
+licenses = "GPL-3.0-or-later AND GPL-3.0-or-later WITH GCC-exception-3.1"
+website = "https://github.com/ovenpasta/gnat-llvm"
+
+auto-gpr-with = false
+
+[configuration]
+disabled = true
+
+[environment]
+PATH.prepend = "${CRATE_ROOT}/bin"
+GNAT_LLVM_PREFIX.set = "${CRATE_ROOT}"
+
+[origin."case(os)".linux."case(host-arch)".aarch64]
+binary = true
+url = "https://github.com/ovenpasta/gnat-llvm/releases/download/v16.1.0-1/gnat_llvm-16.1.0-aarch64-linux.tar.gz"
+hashes = ["sha256:de9b662bf623f1b8e2a1024effbc02b9b5a088d7f9937e27bcf0e207ae83c9d7"]
+
+[origin."case(os)".linux."case(host-arch)".x86-64]
+binary = true
+url = "https://github.com/ovenpasta/gnat-llvm/releases/download/v16.1.0-1/gnat_llvm-16.1.0-x86_64-linux.tar.gz"
+hashes = ["sha256:0ed585c7feffbf33c85167c61e8a6fe8b47959b23e1df0f688d726afe94c8df9"]
