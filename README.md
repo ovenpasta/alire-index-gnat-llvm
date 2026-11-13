@@ -137,6 +137,82 @@ ADAWEBPACK_RUNTIME = "wasm-eh"   # or wasm, wasm-eh-exnref, ...
 The `*-exnref` runtimes also need `GNAT_WASM_EH.set = "exnref"` under
 `[environment]`.
 
+## 2c. WASI programs (node, wasmer, ...)
+
+Command-line programs with `Ada.Command_Line`, exit status and file I/O in
+preopened directories. The toolchain bundles wasi-libc and links the program
+itself; no extra SDK is needed.
+
+```sh
+alr init --bin hello_wasi && cd hello_wasi
+alr with gnat_llvm
+```
+
+In `hello_wasi.gpr`, add:
+
+```ada
+   Prefix := external ("GNAT_LLVM_PREFIX");
+
+   for Target use "llvm";
+   for Runtime ("Ada") use Prefix & "/lib/gnat-llvm/wasm32/rts-wasm-wasi-eh";
+
+   package Compiler is
+      for Default_Switches ("Ada") use
+        Hello_Wasi_Config.Ada_Compiler_Switches & ("--target=wasm32-wasip1");
+   end Compiler;
+
+   package Builder is
+      for Executable ("hello_wasi.adb") use "hello_wasi.wasm";
+   end Builder;
+
+   package Linker is
+      for Switches ("Ada") use
+        ("--target=wasm32-wasip1",
+         "--sysroot=" & Prefix & "/share/wasi-sysroot");
+   end Linker;
+```
+
+```sh
+alr build
+```
+
+Run it with node (`run.mjs`, preopening the current directory):
+
+```js
+import { readFileSync } from 'node:fs';
+import { WASI } from 'node:wasi';
+
+const [file, ...args] = process.argv.slice(2);
+const wasi = new WASI({ version: 'preview1', args: [file, ...args],
+                        env: process.env, preopens: { '.': '.' },
+                        returnOnExit: true });
+const { instance } = await WebAssembly.instantiate(
+  readFileSync(file), wasi.getImportObject());
+process.exitCode = wasi.start(instance);
+```
+
+```sh
+node --no-warnings run.mjs bin/hello_wasi.wasm args...
+```
+
+wasmer supports only the standardized exnref exception encoding (as do
+other engines that implement just the final exception-handling proposal):
+use the `rts-wasm-wasi-eh-exnref` runtime and add to `alire.toml`
+
+```toml
+[environment]
+GNAT_WASM_EH.set = "exnref"
+```
+
+then for example `wasmer run --enable-exceptions --dir=. bin/hello_wasi.wasm`.
+node runs both encodings.
+
+Processes do not exist under WASI: `GNAT.OS_Lib` spawn / kill / wait calls
+link but fail at run time. An unhandled exception prints the usual
+`raised ...` message and exits with status 1. Under node, the non-blocking
+`Ada.Text_IO.Get_Immediate (Item, Available)` always reports no input
+(node's WASI does not report stdin readiness).
+
 ## Runtimes in the toolchain
 
 | Runtime | Use |
@@ -144,7 +220,7 @@ The `*-exnref` runtimes also need `GNAT_WASM_EH.set = "exnref"` under
 | `rts-wasm-eh` | standalone (no Emscripten), full exception propagation; AdaWebPack's default |
 | `rts-wasm` | standalone, `No_Exception_Propagation`, smallest |
 | `rts-wasm-emcc-eh`, `rts-wasm-emcc` | on Emscripten's libc: full `Text_IO`, files, `Ada.Calendar` |
-| `rts-wasm-wasi-eh` | WASI (wasmtime, wasmer, node:wasi); link with `wasm-ld` and a wasi-sysroot |
+| `rts-wasm-wasi-eh` | WASI (wasmtime, wasmer, node:wasi), see 2c |
 | `*-exnref` | the standardized exnref exception encoding |
 | `rts-native` | native Linux programs |
 
