@@ -151,9 +151,6 @@ The `*-exnref` runtimes also need `GNAT_WASM_EH.set = "exnref"` under
 The [AdaWebPack examples](https://github.com/ovenpasta/adawebpack/tree/master/examples)
 (SDL3, HAC, DOM demos) are Alire crates too: `cd examples/<name> && alr build`.
 
-Known: emcc links print a harmless `function signature mismatch: strncpy`
-warning.
-
 ## Releases
 
 Each [gnat-llvm release](https://github.com/ovenpasta/gnat-llvm/releases)
